@@ -32,7 +32,7 @@ TOPICS = ["World", "Sports", "Business", "Sci/Tech"]
 def load_pipelines():
     from transformers import pipeline
     return {
-        "topic":  pipeline("text-classification", model=TOPIC_MODEL, top_k=1),
+        "topic":  pipeline("text-classification", model=TOPIC_MODEL),   # 不传 top_k
         "sum":    pipeline("summarization", model=SUMMARY_MODEL),
         "ner":    pipeline("token-classification", model=NER_MODEL,
                            aggregation_strategy="simple"),
@@ -54,16 +54,28 @@ pipes = load_pipelines()
 demo_df = load_demo()
 
 
+def _first(x):
+    """兼容不同 transformers 版本：{...} / [{...}] / [[{...}]] 都解包成 dict。"""
+    while isinstance(x, (list, tuple)):
+        if not x:
+            return {}
+        x = x[0]
+    return x if isinstance(x, dict) else {}
+
+
 def analyze(text, max_len=40, min_len=10):
     """Run all three pipelines on one piece of text."""
-    t = pipes["topic"](text)[0]
-    s = pipes["sum"](text, max_length=max_len, min_length=min_len, do_sample=False)[0]
+    t = _first(pipes["topic"](text))
+    s = _first(pipes["sum"](text, max_length=max_len, min_length=min_len, do_sample=False))
     ents = pipes["ner"](text)
+    if not isinstance(ents, list):
+        ents = []
     return {
-        "topic": t["label"],
-        "score": t["score"],
-        "summary": s["summary_text"],
-        "entities": [(e["word"], e["entity_group"]) for e in ents],
+        "topic":   t.get("label", "n/a"),
+        "score":   float(t.get("score", 0.0)),
+        "summary": s.get("summary_text", "(no summary)"),
+        "entities": [(e.get("word", ""), e.get("entity_group", ""))
+                     for e in ents if isinstance(e, dict)],
     }
 
 
