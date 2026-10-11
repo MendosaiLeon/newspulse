@@ -20,7 +20,7 @@ st.set_page_config(page_title="NewsPulse — AI News Triage", page_icon="📰", 
 
 TOPIC_MODEL = os.environ.get(
     "NEWSPULSE_MODEL",
-    "MendosaiLeon/newspulse-topic-4",   # ⚠ change to your HF username if different
+    "MendosaiLeonye/newspulse-topic-4",   # ⚠ change to your HF username if different
 )
 SUMMARY_MODEL = "sshleifer/distilbart-cnn-12-6"
 NER_MODEL = "dslim/bert-base-NER"
